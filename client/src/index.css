@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  /* Ituturo natin ang colors dito para makilala ng IntelliSense */
+  --color-navy-900: #001b3d;
+  --color-navy-800: #002654;
+  --color-navy-700: #003370;
+  --color-cyan-400: #00e5ff;
+  --color-blue-600: #2563eb;
+}
+
+:root {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-navy-900);
+  min-height: 100vh;
+}
+
+/* Para sa Glassmorphism effect na gusto mo */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
