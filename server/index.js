@@ -32,9 +32,10 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-// '0.0.0.0' allows the server to accept connections from any IP in the network
+// '0.0.0.0' is correct—it allows your laptop to talk to itself and other devices
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server is flying!`);
     console.log(`🏠 Local:   http://localhost:${PORT}`);
-    console.log(`🌐 Network: http://192.168.1.33:${PORT}`);
+    // Change your frontend API_BASE_URL to the one below if testing on a phone:
+    console.log(`🌐 Network: http://192.168.137.160:${PORT}`); 
 });

@@ -37,21 +37,25 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     try {
+        // Fetching by email as defined in your LoginPage.jsx
         const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
         
         if (users.length === 0) {
-            return res.status(400).json({ message: "Invalid credentials." });
+            return res.status(400).json({ message: "Invalid email or password." });
         }
 
         const user = users[0];
+        
+        // Matches your DB column 'user_password'
         const isMatch = await bcrypt.compare(password, user.user_password);
         if (!isMatch) {
-            return res.status(400).json({ message: "Invalid credentials." });
+            return res.status(400).json({ message: "Invalid email or password." });
         }
 
+        // Ensure JWT_SECRET exists in your .env
         const token = jwt.sign(
             { id: user.user_id, username: user.username }, 
-            process.env.JWT_SECRET, 
+            process.env.JWT_SECRET || 'fallback_secret', 
             { expiresIn: '24h' } 
         );
 
@@ -78,7 +82,6 @@ router.post('/verify-email', async (req, res) => {
             return res.status(404).json({ message: "Email not found." });
         }
 
-        // Kung gusto mong magpakita ng personalized hint (hal. "Hello, [Username]")
         res.json({ 
             exists: true, 
             username: users[0].username, 
@@ -93,11 +96,9 @@ router.post('/verify-email', async (req, res) => {
 router.post('/reset-password', async (req, res) => {
     const { email, newPassword } = req.body;
     try {
-        // I-hash ang bagong password bago i-save (Security Priority)
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        // Update query gamit ang 'user_password' column
         const [result] = await db.execute(
             'UPDATE users SET user_password = ? WHERE email = ?',
             [hashedPassword, email]
