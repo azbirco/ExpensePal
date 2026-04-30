@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Receipt, BarChart3, LogOut, Archive, PiggyBank } from 'lucide-react';
-import api from './api'; 
-import Logo from './Logo'; 
+import api from '../services/api'; // Tiyaking tama ang path na ito
+import Logo from './Logo'; // Magkatabi sila sa components folder
 
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [archiveCount, setArchiveCount] = useState(0);
 
+  // Real-time update para sa badge ng Archive Bin
   const fetchArchiveCount = async () => {
     try {
       const res = await api.get('/expenses/archived-count');
@@ -16,13 +17,14 @@ const Sidebar = () => {
         setArchiveCount(res.data.count);
       }
     } catch (err) {
-      console.warn("Badge sync silent fail...");
+      // Silent fail para hindi makaabala sa user experience
+      console.warn("Badge sync failed...");
     }
   };
 
   useEffect(() => {
     fetchArchiveCount();
-    const interval = setInterval(fetchArchiveCount, 5000); 
+    const interval = setInterval(fetchArchiveCount, 5000); // Nag-uupdate bawat 5 segundo
     return () => clearInterval(interval);
   }, []);
 
@@ -63,6 +65,7 @@ const Sidebar = () => {
               <Icon size={20} className={isActive ? 'text-cyan-400' : 'group-hover:scale-110 transition-transform'} />
               <span className="font-semibold tracking-wide text-sm">{item.name}</span>
 
+              {/* Archive Count Badge */}
               {item.name === 'Archive Bin' && archiveCount > 0 && (
                 <div className="absolute right-4 bg-rose-500 text-white text-[10px] font-bold h-5 min-w-[20px] px-1 flex items-center justify-center rounded-full animate-pulse">
                   {archiveCount}

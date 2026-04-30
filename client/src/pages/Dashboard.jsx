@@ -3,7 +3,7 @@ import {
   Wallet, Clock, Activity, Target, ChevronRight, 
   Utensils, Bus, FileText, User, Users, GraduationCap, PiggyBank, Tag, Sparkles
 } from 'lucide-react';
-import api from './api';
+import api from '../services/api';
 
 // Icon Map: Matches database strings to Lucide components
 const iconMap = {

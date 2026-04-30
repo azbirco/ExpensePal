@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowLeft, CheckCircle, Eye, EyeOff } from 'lucide-react';
-import api from './api'; 
-import Logo from './Logo'; 
+import api from '../services/api'; 
+import Logo from '../components/Logo'; 
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');

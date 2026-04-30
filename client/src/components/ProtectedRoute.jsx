@@ -4,12 +4,12 @@ import { Navigate } from 'react-router-dom';
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
 
-  // Kung walang token, ibalik sa login
+  // Kung walang token, ibalik sa login screen
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  // Kung may token, ipakita ang mga pages (Dashboard/Expenses)
+  // Kung authorized (may token), ipakita ang hiniling na page
   return children;
 };
 

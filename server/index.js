@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
+const os = require('os'); // I-import ito para makuha ang system info
 require('dotenv').config();
-const connectDB = require('./db'); // Pinalitan ang 'db' ng connection function para sa MongoDB
+const connectDB = require('./db'); 
 
 // Import Routes
 const authRoutes = require('./routes/auth'); 
@@ -12,7 +13,6 @@ const savingsRoutes = require('./routes/savings');
 const app = express();
 
 // --- CONNECT TO MONGODB ---
-// Tinatawag ang function para kumonekta sa MongoDB Atlas bago mag-start ang server
 connectDB(); 
 
 // Middlewares
@@ -37,10 +37,24 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-// Ang '0.0.0.0' ay pinanatili para ma-access ang server mo sa ibang devices (tulad ng phone)
+// --- DYNAMIC IP DETECTION ---
+// Kinukuha nito ang current IP ng kahit anong computer na gamit mo
+const getNetworkIP = () => {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return '0.0.0.0';
+};
+
+const networkIP = getNetworkIP();
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server is flying with MongoDB!`);
     console.log(`🏠 Local:   http://localhost:${PORT}`);
-    // Tandaan: I-verify kung tama pa rin ang IP address na ito sa iyong network
-    console.log(`🌐 Network: http://192.168.137.160:${PORT}`); 
+    console.log(`🌐 Network: http://${networkIP}:${PORT}`); // Automatic na itong mag-uupdate!
 });

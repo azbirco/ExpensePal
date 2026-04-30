@@ -1,15 +1,11 @@
 import axios from 'axios';
 
+// Babasahin nito ang nasa client/.env file. 
+// Kung wala, fallback sa localhost:5000.
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
 const api = axios.create({
-    /* Gagamit tayo ng localhost para hindi ka na laging nagpapalit ng IP 
-       kapag nagbabago ang Wi-Fi connection mo.
-    */
-    baseURL: 'http://localhost:5000/api' 
-    
-    /* Gagamitin mo lang ang code sa ibaba kung itetest mo na ang app 
-       gamit ang physical phone mo (Mobile Testing):
-       baseURL: 'http://192.168.137.160:5000/api' 
-    */
+    baseURL: API_URL
 });
 
 // Interceptor para sa Request: Isasama ang token sa headers
@@ -33,8 +29,6 @@ api.interceptors.response.use(
         if (error.response && error.response.status === 401) {
             console.error("Session expired or unauthorized. Logging out...");
             localStorage.removeItem('token');
-            
-            // Mas maganda kung i-force redirect sa login para hindi "stuck" ang user
             window.location.href = '/login'; 
         }
         return Promise.reject(error);

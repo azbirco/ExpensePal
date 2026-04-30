@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { RotateCcw, Trash2, Archive as ArchiveIcon, Tag, Clock } from 'lucide-react';
-import api from './api';
+import api from '../services/api';
 
 const Archive = () => {
   const [archived, setArchived] = useState([]);

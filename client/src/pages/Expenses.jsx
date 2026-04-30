@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, Tag, Edit2, Archive, AlertCircle, Clock, ChevronDown } from 'lucide-react';
-import api from './api'; 
+import api from '../services/api'; 
 
 const Expenses = () => {
   const [expenses, setExpenses] = useState([]);
