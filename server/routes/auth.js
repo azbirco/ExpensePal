@@ -2,33 +2,35 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs'); 
 const jwt = require('jsonwebtoken');
-const db = require('../db'); 
+const User = require('../models/User'); // I-import ang Mongoose Model
 
 // --- REGISTER ROUTE ---
 router.post('/register', async (req, res) => {
     const { username, email, password, monthly_salary, work_hours } = req.body;
 
     try {
+        // Check kung existing na ang user (MongoDB-style)
+        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+        if (existingUser) {
+            return res.status(400).json({ message: "Username or Email already exists." });
+        }
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        const query = `
-            INSERT INTO users (username, email, user_password, monthly_salary, work_hours_per_month) 
-            VALUES (?, ?, ?, ?, ?)`;
-        
-        await db.execute(query, [
-            username, 
-            email, 
-            hashedPassword, 
-            monthly_salary || 0, 
-            work_hours || 160
-        ]);
+        // Gagawa ng bagong User document
+        const newUser = new User({
+            username,
+            email,
+            user_password: hashedPassword,
+            monthly_salary: monthly_salary || 0,
+            work_hours_per_month: work_hours || 160
+        });
+
+        await newUser.save(); // Save sa MongoDB
 
         res.status(201).json({ message: "User registered successfully!" });
     } catch (err) {
-        if (err.code === 'ER_DUP_ENTRY') {
-            return res.status(400).json({ message: "Username or Email already exists." });
-        }
         res.status(500).json({ message: "Registration failed", error: err.message });
     }
 });
@@ -37,24 +39,22 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
     try {
-        // Fetching by email as defined in your LoginPage.jsx
-        const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
+        // Hanapin ang user gamit ang email
+        const user = await User.findOne({ email });
         
-        if (users.length === 0) {
+        if (!user) {
             return res.status(400).json({ message: "Invalid email or password." });
         }
 
-        const user = users[0];
-        
-        // Matches your DB column 'user_password'
+        // Compare password
         const isMatch = await bcrypt.compare(password, user.user_password);
         if (!isMatch) {
             return res.status(400).json({ message: "Invalid email or password." });
         }
 
-        // Ensure JWT_SECRET exists in your .env
+        // Generate Token
         const token = jwt.sign(
-            { id: user.user_id, username: user.username }, 
+            { id: user._id, username: user.username }, // MongoDB uses _id
             process.env.JWT_SECRET || 'fallback_secret', 
             { expiresIn: '24h' } 
         );
@@ -62,7 +62,7 @@ router.post('/login', async (req, res) => {
         res.json({ 
             token, 
             user: { 
-                id: user.user_id, 
+                id: user._id, 
                 username: user.username,
                 salary: user.monthly_salary 
             } 
@@ -76,15 +76,15 @@ router.post('/login', async (req, res) => {
 router.post('/verify-email', async (req, res) => {
     const { email } = req.body;
     try {
-        const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
+        const user = await User.findOne({ email });
         
-        if (users.length === 0) {
+        if (!user) {
             return res.status(404).json({ message: "Email not found." });
         }
 
         res.json({ 
             exists: true, 
-            username: users[0].username, 
+            username: user.username, 
             message: "User found." 
         });
     } catch (err) {
@@ -99,12 +99,14 @@ router.post('/reset-password', async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-        const [result] = await db.execute(
-            'UPDATE users SET user_password = ? WHERE email = ?',
-            [hashedPassword, email]
+        // Update document sa MongoDB
+        const updatedUser = await User.findOneAndUpdate(
+            { email: email },
+            { user_password: hashedPassword },
+            { new: true }
         );
 
-        if (result.affectedRows === 0) {
+        if (!updatedUser) {
             return res.status(404).json({ message: "User not found." });
         }
 

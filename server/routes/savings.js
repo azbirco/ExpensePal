@@ -1,16 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const Saving = require('../models/Saving'); // Import Mongoose Model
 const { protect } = require('../middleware/authMiddleware');
 
 // 1. Get Total Savings & History
 router.get('/', protect, async (req, res) => {
     try {
-        const [rows] = await db.execute(
-            'SELECT * FROM savings WHERE user_id = ? ORDER BY date_added DESC',
-            [req.user.id]
-        );
-        res.json(rows);
+        // Hanapin lahat ng savings ng specific user
+        const savings = await Saving.find({ user_id: req.user.id })
+                                    .sort({ date_added: -1 });
+        res.json(savings);
     } catch (err) {
         res.status(500).json({ message: "Error fetching savings", error: err.message });
     }
@@ -20,13 +19,16 @@ router.get('/', protect, async (req, res) => {
 router.post('/add', protect, async (req, res) => {
     const { amount, description } = req.body;
     try {
-        await db.execute(
-            'INSERT INTO savings (user_id, amount, description) VALUES (?, ?, ?)',
-            [req.user.id, amount, description]
-        );
+        const newSaving = new Saving({
+            user_id: req.user.id,
+            amount: amount,
+            description: description
+        });
+
+        await newSaving.save();
         res.status(201).json({ message: "Savings updated!" });
     } catch (err) {
-        res.status(500).json({ message: "Error adding savings" });
+        res.status(500).json({ message: "Error adding savings", error: err.message });
     }
 });
 

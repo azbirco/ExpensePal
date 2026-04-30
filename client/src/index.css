@@ -1,30 +1,52 @@
 @import "tailwindcss";
 
 @theme {
-  /* Ituturo natin ang colors dito para makilala ng IntelliSense */
   --color-navy-900: #001b3d;
   --color-navy-800: #002654;
   --color-navy-700: #003370;
   --color-cyan-400: #00e5ff;
   --color-blue-600: #2563eb;
+
+  --shadow-neon: 0 0 20px rgba(34, 211, 238, 0.2);
 }
 
 :root {
-  margin: 0;
-  padding: 0;
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
-  background-color: var(--color-navy-900);
-  min-height: 100vh;
+  background-color: #001b3d;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Para sa Glassmorphism effect na gusto mo */
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #001b3d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #003370;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00e5ff;
+}
+
+/* UI Helper Classes */
 .glass-card {
   background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.text-gradient {
+  background: linear-gradient(to right, #00e5ff, #2563eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

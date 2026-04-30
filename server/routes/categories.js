@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db');
+const Category = require('../models/Category'); // Import Mongoose Model
 
 // Kunin lahat ng categories para sa dropdown sa frontend
 router.get('/', async (req, res) => {
     try {
-        const [rows] = await db.execute('SELECT * FROM categories');
-        res.json(rows);
+        // .find() ay katumbas ng SELECT * FROM
+        const categories = await Category.find();
+        res.json(categories);
     } catch (err) {
         res.status(500).json({ message: "Error fetching categories", error: err.message });
     }

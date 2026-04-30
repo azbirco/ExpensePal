@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 
 const protect = (req, res, next) => {
-    // Kunin ang token mula sa Authorization header (Bearer <token>)
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
 
@@ -10,13 +9,15 @@ const protect = (req, res, next) => {
     }
 
     try {
-        // I-verify ang token gamit ang secret key mo sa .env
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         
-        // I-save ang user info sa request object para magamit sa routes
+        // Sa MongoDB, ang decoded.id ay maglalaman ng user._id 
+        // na ni-sign natin sa auth.js kanina.
         req.user = decoded; 
-        next(); // Patuloy sa susunod na function
+        next(); 
     } catch (err) {
+        // Mas maganda kung i-log natin ang error para sa debugging
+        console.error("JWT Verification Error:", err.message);
         res.status(401).json({ message: "Invalid or Expired Token" });
     }
 };
