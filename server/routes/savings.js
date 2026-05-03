@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const Saving = require('../models/Saving'); // Import Mongoose Model
+// SIGURADUHIN: Ang filename sa folder ay Savings.js (may 's')
+const Saving = require('../models/Savings'); 
 const { protect } = require('../middleware/authMiddleware');
 
 // 1. Get Total Savings & History
 router.get('/', protect, async (req, res) => {
     try {
-        // Hanapin lahat ng savings ng specific user
         const savings = await Saving.find({ user_id: req.user.id })
                                     .sort({ date_added: -1 });
         res.json(savings);

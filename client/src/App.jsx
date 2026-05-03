@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-// Pages - Ang mga main screens ng ExpensePal
+// Pages
 import LoginPage from './pages/LoginPage'; 
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -11,15 +11,15 @@ import Savings from './pages/Savings';
 import Archive from './pages/Archive';
 import Reports from './pages/Reports'; 
 
-// Components - Ang mga inilipat nating reusable files
+// Components
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
-import Logo from './components/Logo'; // Heto na, dagdag natin para kumpleto!
 
 function App() {
   return (
-    <Router>
-      <div className="bg-[#001B3D] min-h-screen font-sans text-slate-200">
+    /* Idinagdag ang Future Flags para mawala ang warnings sa console */
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <div className="bg-[#001B3D] min-h-screen font-sans text-slate-200 selection:bg-cyan-400/30">
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -31,11 +31,12 @@ function App() {
             path="/*" 
             element={
               <ProtectedRoute>
-                <div className="flex min-h-screen">
-                  {/* Sidebar na may kasamang navigation */}
+                <div className="flex min-h-screen overflow-hidden">
+                  {/* Sidebar Navigation */}
                   <Sidebar /> 
                   
-                  <main className="flex-1 h-screen overflow-y-auto bg-navy-900/50">
+                  {/* Main Content Area */}
+                  <main className="flex-1 h-screen overflow-y-auto bg-navy-900/50 custom-scrollbar">
                     <Routes>
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/expenses" element={<Expenses />} />

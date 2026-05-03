@@ -1,0 +1,39 @@
+{
+  "name": "ExpensePal Personal Expenses Tracking",
+  "short_name": "ExpensePal",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#001B3D",
+  "theme_color": "#001B3D",
+  "description": "Know the true labor cost of your lifestyle.",
+  "icons": [
+    {
+      "src": "pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "ExpensePal Desktop View"
+    },
+    {
+      "src": "pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "ExpensePal Mobile View"
+    }
+  ]
+}

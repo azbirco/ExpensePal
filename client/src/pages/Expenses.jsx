@@ -22,6 +22,7 @@ const Expenses = () => {
     try {
       const res = await api.get('/categories');
       setDbCategories(res.data);
+      // I-set ang default category name
       if (res.data.length > 0) setCategory(res.data[0].category_name);
     } catch (err) { console.error("Error categories:", err); }
   };
@@ -41,7 +42,7 @@ const Expenses = () => {
   }, []);
 
   const filteredExpenses = expenses.filter(exp => {
-    if (exp.is_archived === 1) return false;
+    if (exp.is_archived) return false; // In MongoDB, usually Boolean or 1/0
     return exp.item_name.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
@@ -60,21 +61,26 @@ const Expenses = () => {
     if (!amount || !description || description.length > CHAR_LIMIT) return;
     setLoading(true);
 
+    // FIX: Hanapin ang category gamit ang _id mula sa MongoDB
     const selectedCat = dbCategories.find(c => c.category_name === category);
+    
     const payload = { 
       item_name: description, 
       amount: parseFloat(amount), 
-      category_id: selectedCat ? selectedCat.category_id : 1 
+      category_id: selectedCat ? selectedCat._id : null // Gamitin ang _id
     };
 
     try {
-        if (editingExpense) await api.put(`/expenses/update/${editingExpense.expense_id}`, payload);
-        else await api.post('/expenses/add', payload);
+        if (editingExpense) {
+            await api.put(`/expenses/update/${editingExpense._id}`, payload); // Gamitin ang _id
+        } else {
+            await api.post('/expenses/add', payload);
+        }
         handleCloseModal();
         fetchExpenses();
     } catch (err) { 
         console.error(err);
-        alert("Transaction failed.");
+        alert("Transaction failed. Check server console.");
     } finally { setLoading(false); }
   };
 
@@ -113,7 +119,7 @@ const Expenses = () => {
                 {fetching ? (
                    <tr><td colSpan="5" className="p-20 text-center text-gray-500 font-black uppercase tracking-widest text-xs">Loading data...</td></tr>
                 ) : filteredExpenses.length > 0 ? filteredExpenses.map((exp) => (
-                <tr key={exp.expense_id} className="hover:bg-white/[0.02] transition-all group">
+                <tr key={exp._id} className="hover:bg-white/[0.02] transition-all group">
                     <td className="p-6">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center border" style={{ borderColor: `${exp.category_color}40`, backgroundColor: `${exp.category_color}10`, color: exp.category_color }}><Tag size={16}/></div>
@@ -127,12 +133,12 @@ const Expenses = () => {
                     <td className="p-6 font-bold text-cyan-400 text-lg text-right">₱{parseFloat(exp.amount).toLocaleString()}</td>
                     <td className="p-6 text-center">
                         <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-400/10 border border-amber-400/20 rounded-full font-mono font-black text-amber-400 text-xs">
-                            <Clock size={12}/> {parseFloat(exp.labor_hours_equivalent).toFixed(2)} hrs
+                            <Clock size={12}/> {parseFloat(exp.labor_hours_equivalent || 0).toFixed(2)} hrs
                         </div>
                     </td>
                     <td className="p-6 text-center">
                         <button onClick={() => { setEditingExpense(exp); setDescription(exp.item_name); setAmount(exp.amount); setCategory(exp.category_name); setIsModalOpen(true); }} className="p-2.5 bg-white/5 hover:bg-cyan-400/10 rounded-xl text-gray-500 hover:text-cyan-400 transition-all mr-2"><Edit2 size={14}/></button>
-                        <button onClick={() => handleArchive(exp.expense_id)} className="p-2.5 bg-white/5 hover:bg-rose-400/10 rounded-xl text-gray-500 hover:text-rose-400 transition-all"><Archive size={14}/></button>
+                        <button onClick={() => handleArchive(exp._id)} className="p-2.5 bg-white/5 hover:bg-rose-400/10 rounded-xl text-gray-500 hover:text-rose-400 transition-all"><Archive size={14}/></button>
                     </td>
                 </tr>
                 )) : (
@@ -174,9 +180,6 @@ const Expenses = () => {
                       </div>
                     )}
                   </div>
-                  {description.length >= CHAR_LIMIT && (
-                    <p className="text-[10px] text-rose-500 font-black uppercase tracking-wider ml-1">You've reached character limit</p>
-                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -188,7 +191,11 @@ const Expenses = () => {
                   <label className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400 px-1">Category</label>
                   <div className="relative">
                     <select className="w-full bg-navy-900/50 border border-white/10 rounded-2xl py-4 px-5 text-white outline-none appearance-none cursor-pointer" value={category} onChange={(e) => setCategory(e.target.value)}>
-                      {dbCategories.map(cat => <option key={cat.category_id} value={cat.category_name} className="bg-navy-800 text-white">{cat.category_name}</option>)}
+                      {dbCategories.map(cat => (
+                        <option key={cat._id} value={cat.category_name} className="bg-navy-800 text-white">
+                          {cat.category_name}
+                        </option>
+                      ))}
                     </select>
                     <ChevronDown size={18} className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                   </div>

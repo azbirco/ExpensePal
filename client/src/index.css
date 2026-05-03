@@ -6,47 +6,25 @@
   --color-navy-700: #003370;
   --color-cyan-400: #00e5ff;
   --color-blue-600: #2563eb;
-
   --shadow-neon: 0 0 20px rgba(34, 211, 238, 0.2);
 }
 
-:root {
-  color-scheme: dark;
-}
+@layer components {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
 
-body {
-  margin: 0;
-  background-color: #001b3d;
-  -webkit-font-smoothing: antialiased;
-}
+  .text-gradient {
+    background: linear-gradient(to right, #00e5ff, #2563eb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+  }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #001b3d;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #003370;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #00e5ff;
-}
-
-/* UI Helper Classes */
-.glass-card {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.text-gradient {
-  background: linear-gradient(to right, #00e5ff, #2563eb);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  .btn-neon {
+    @apply bg-cyan-400 text-navy-900 font-bold py-2 px-4 rounded-lg 
+           transition-all duration-300 hover:shadow-neon hover:scale-105;
+  }
 }

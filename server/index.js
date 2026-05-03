@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const os = require('os'); // I-import ito para makuha ang system info
+const os = require('os'); 
 require('dotenv').config();
 const connectDB = require('./db'); 
 
@@ -25,6 +25,7 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/savings', savingsRoutes);
 
+// ITO ANG BINALIK NATIN:
 app.get('/', (req, res) => {
     res.send('🚀 ExpensePal Backend is fully operational with MongoDB!');
 });
@@ -38,7 +39,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 
 // --- DYNAMIC IP DETECTION ---
-// Kinukuha nito ang current IP ng kahit anong computer na gamit mo
 const getNetworkIP = () => {
     const interfaces = os.networkInterfaces();
     for (const name of Object.keys(interfaces)) {
@@ -56,5 +56,5 @@ const networkIP = getNetworkIP();
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server is flying with MongoDB!`);
     console.log(`🏠 Local:   http://localhost:${PORT}`);
-    console.log(`🌐 Network: http://${networkIP}:${PORT}`); // Automatic na itong mag-uupdate!
+    console.log(`🌐 Network: http://${networkIP}:${PORT}`);
 });
