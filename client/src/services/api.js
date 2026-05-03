@@ -39,7 +39,7 @@ api.interceptors.response.use(
             }
         } else if (error.request) {
             // Error ito kapag hindi ma-reach ang backend server
-            console.error("The server is unreachable. Is your backend running at http://localhost:5000?");
+            console.error("The server is unreachable. Please check your internet or backend status.");
         }
         return Promise.reject(error);
     }
