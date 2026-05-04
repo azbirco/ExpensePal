@@ -31,13 +31,11 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-[#001B3D] font-sans p-4 md:p-10">
-      {/* Background Decor */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* MAIN FLOATING CONTAINER */}
       <div className="w-full max-w-5xl min-h-[600px] flex flex-col lg:flex-row bg-[#0D2137] rounded-[3rem] shadow-2xl overflow-hidden border border-white/5 relative z-10">
         
-        {/* LEFT SIDE: Visuals */}
+        {/* LEFT SIDE */}
         <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-center px-16 bg-[#001B3D]/50 border-r border-white/5">
           <div className="relative z-10">
             <Logo className="w-64 mb-10" />
@@ -75,16 +73,31 @@ const LoginPage = () => {
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-5">
+            {/* In-add ang autoComplete="off" sa form */}
+            <form onSubmit={handleLogin} className="space-y-5" autoComplete="off">
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
-                <input type="email" placeholder="Email Address" required className="w-full p-4 pl-12 bg-[#E8F0FE] rounded-2xl text-[#001B3D] text-sm outline-none focus:ring-2 focus:ring-cyan-400" onChange={(e) => setEmail(e.target.value)} />
+                <input 
+                  type="email" 
+                  placeholder="Email Address" 
+                  required 
+                  autoComplete="one-time-code" // Pinipilit ang browser na huwag mag-autofill
+                  className="w-full p-4 pl-12 bg-[#E8F0FE] rounded-2xl text-[#001B3D] text-sm outline-none focus:ring-2 focus:ring-cyan-400" 
+                  onChange={(e) => setEmail(e.target.value)} 
+                />
               </div>
 
               <div className="space-y-3">
                 <div className="relative group">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" />
-                  <input type={showPassword ? "text" : "password"} placeholder="Password" required className="w-full p-4 pl-12 bg-[#E8F0FE] rounded-2xl text-[#001B3D] text-sm outline-none focus:ring-2 focus:ring-cyan-400" onChange={(e) => setPassword(e.target.value)} />
+                  <input 
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="Password" 
+                    required 
+                    autoComplete="new-password" // Iniiwasan ang pag-suggest ng saved passwords
+                    className="w-full p-4 pl-12 bg-[#E8F0FE] rounded-2xl text-[#001B3D] text-sm outline-none focus:ring-2 focus:ring-cyan-400" 
+                    onChange={(e) => setPassword(e.target.value)} 
+                  />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-cyan-400 transition-colors">
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
