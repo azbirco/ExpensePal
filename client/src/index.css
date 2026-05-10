@@ -9,6 +9,21 @@
   --shadow-neon: 0 0 20px rgba(34, 211, 238, 0.2);
 }
 
+/* Custom Keyframes para sa swabeng animation ng badges */
+@keyframes slow-glow {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(0.92);
+    filter: brightness(1.2);
+  }
+}
+
 @layer components {
   .glass-card {
     background: rgba(255, 255, 255, 0.03);
@@ -26,5 +41,10 @@
   .btn-neon {
     @apply bg-cyan-400 text-navy-900 font-bold py-2 px-4 rounded-lg 
            transition-all duration-300 hover:shadow-neon hover:scale-105;
+  }
+
+  /* Utility class para sa badges */
+  .animate-slow-glow {
+    animation: slow-glow 3s ease-in-out infinite;
   }
 }

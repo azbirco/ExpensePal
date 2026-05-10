@@ -4,36 +4,43 @@ const os = require('os');
 require('dotenv').config();
 const connectDB = require('./db'); 
 
-// Import Routes
+// --- IMPORT ROUTES ---
 const authRoutes = require('./routes/auth'); 
 const expenseRoutes = require('./routes/expenses');
 const categoryRoutes = require('./routes/categories'); 
 const savingsRoutes = require('./routes/savings');
+// BAGONG ADD: Route para sa Fixed Bill Splitting at Flexible Goal Tracking
+const eventRoutes = require('./routes/events'); 
 
 const app = express();
 
 // --- CONNECT TO MONGODB ---
-connectDB(); 
+connectDB();
 
-// Middlewares
+// --- MIDDLEWARES ---
 app.use(cors()); 
 app.use(express.json()); 
 
-// Routes
+// --- ROUTES REGISTRATION ---
 app.use('/api/auth', authRoutes); 
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/savings', savingsRoutes);
+// BAGONG ADD: Dito papasok ang lahat ng requests na may kaugnayan sa Group Events
+app.use('/api/events', eventRoutes); 
 
-// ITO ANG BINALIK NATIN:
+// Main Test Route
 app.get('/', (req, res) => {
     res.send('🚀 ExpensePal Backend is fully operational with MongoDB!');
 });
 
-// Error Handling Middleware
+// --- ERROR HANDLING MIDDLEWARE ---
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).send({ message: 'Something went wrong!' });
+    res.status(500).send({ 
+        message: 'Something went wrong!',
+        error: process.env.NODE_ENV === 'development' ? err.message : {} 
+    });
 });
 
 const PORT = process.env.PORT || 5000;
@@ -53,6 +60,7 @@ const getNetworkIP = () => {
 
 const networkIP = getNetworkIP();
 
+// --- START SERVER ---
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server is flying with MongoDB!`);
     console.log(`🏠 Local:   http://localhost:${PORT}`);

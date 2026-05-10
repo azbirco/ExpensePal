@@ -1,86 +1,159 @@
 const express = require('express');
 const router = express.Router();
-const Expense = require('../models/Expenses'); // Siguraduhing capital 'E' at may 's'
+const Expenses = require('../models/Expenses'); 
+const Savings = require('../models/Savings');
 const Category = require('../models/Category'); 
 const User = require('../models/User'); 
-const { protect } = require('../middleware/authMiddleware');
+const auth = require('../middleware/authMiddleware'); // FIX: Direct import
 
-// 1. GET ALL ACTIVE EXPENSES
-// Ginagamit sa Dashboard.jsx para ipakita ang listahan ng gastusin
-router.get('/', protect, async (req, res) => {
+// --- NEW: SIDEBAR COUNTS ENDPOINT ---
+router.get('/sidebar-counts', auth, async (req, res) => {
     try {
-        const expenses = await Expense.find({ user_id: req.user.id, is_archived: false })
-            .populate('category_id', 'category_name category_color') 
-            .sort({ date_added: -1 });
+        const [active, archived, savings] = await Promise.all([
+            Expenses.countDocuments({ user_id: req.user.id, is_archived: false }),
+            Expenses.countDocuments({ user_id: req.user.id, is_archived: true }),
+            Savings.countDocuments({ user_id: req.user.id })
+        ]);
+        res.json({ active, archived, savings });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// --- 1. GET ALL ACTIVE EXPENSES ---
+router.get('/', auth, async (req, res) => {
+    try {
+        const expenses = await Expenses.find({ 
+            user_id: req.user.id, 
+            is_archived: false 
+        }).populate('category_id').sort({ date_added: -1 });
         res.json(expenses);
     } catch (err) {
-        res.status(500).json({ message: "Error fetching expenses", error: err.message });
+        res.status(500).json({ message: err.message });
     }
 });
 
-// 2. GET ARCHIVED COUNT (IMPORTANTE: Para sa Sidebar.jsx badge)
-// Ito ang nawawalang route kaya nag-e-error ang console mo kanina
-router.get('/archived-count', protect, async (req, res) => {
+// --- 2. GET ALL ARCHIVED ITEMS ---
+router.get('/archived', auth, async (req, res) => {
     try {
-        const count = await Expense.countDocuments({ 
+        const archivedExpenses = await Expenses.find({ 
             user_id: req.user.id, 
             is_archived: true 
-        });
-        res.json({ count });
+        }).populate('category_id').sort({ date_added: -1 });
+        res.json(archivedExpenses);
     } catch (err) {
-        res.status(500).json({ message: "Error counting archives", error: err.message });
+        res.status(500).json({ message: err.message });
     }
 });
 
-// 3. ADD NEW EXPENSE (With Labor Hours Logic)
-router.post('/add', protect, async (req, res) => {
-    const { category_id, item_name, amount } = req.body;
-
+// --- 3. CREATE NEW EXPENSE ---
+router.post('/', auth, async (req, res) => {
     try {
+        const { item_name, amount, category_id } = req.body;
         const user = await User.findById(req.user.id);
-        
-        // Labor Logic: Compute hourly rate based on user's monthly salary
-        const safeHours = user.work_hours_per_month || 160; 
-        const hourly_rate = user.monthly_salary / safeHours;
-        const labor_hours = parseFloat(amount) / hourly_rate;
+        const monthlySalary = user.monthly_salary || 0;
+        const monthlyHours = user.work_hours_per_month || 160;
+        let laborHours = 0;
 
-        const newExpense = new Expense({
+        if (monthlySalary > 0) {
+            const hourlyRate = monthlySalary / monthlyHours;
+            laborHours = amount / hourlyRate;
+        }
+
+        const newExpense = new Expenses({
             user_id: req.user.id,
-            category_id: category_id,
-            item_name: item_name,
-            amount: amount,
-            labor_hours_equivalent: labor_hours,
-            hourly_rate_at_recording: hourly_rate
+            item_name,
+            amount,
+            category_id,
+            labor_hours_equivalent: laborHours,
+            date_added: new Date()
         });
 
-        await newExpense.save();
-        res.status(201).json({ message: "Expense added successfully!", expense: newExpense });
-    } catch (err) { 
-        res.status(500).json({ error: err.message }); 
+        const savedExpense = await newExpense.save();
+        const category = await Category.findById(category_id);
+        if (category && (category.category_name.toLowerCase().includes('sav') || category.category_name.toLowerCase().includes('emer'))) {
+            await Savings.create({
+                user_id: req.user.id,
+                amount: savedExpense.amount,
+                description: savedExpense.item_name,
+                expense_ref_id: savedExpense._id
+            });
+        }
+        res.status(201).json(savedExpense);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
     }
 });
 
-// 4. ARCHIVE (Soft Delete)
-router.put('/archive/:id', protect, async (req, res) => {
+// --- 4. UPDATE EXPENSE ---
+router.put('/:id', auth, async (req, res) => {
     try {
-        const updatedExpense = await Expense.findOneAndUpdate(
+        const { item_name, amount, category_id } = req.body;
+        const user = await User.findById(req.user.id);
+        const monthlySalary = user.monthly_salary || 0;
+        const monthlyHours = user.work_hours_per_month || 160;
+        let laborHours = 0;
+
+        if (monthlySalary > 0) {
+            const hourlyRate = monthlySalary / monthlyHours;
+            laborHours = amount / hourlyRate;
+        }
+
+        const updatedExpense = await Expenses.findOneAndUpdate(
             { _id: req.params.id, user_id: req.user.id },
-            { is_archived: true },
+            { item_name, amount, category_id, labor_hours_equivalent: laborHours },
             { new: true }
         );
-        res.json({ message: "Item moved to Archive", expense: updatedExpense });
-    } catch (err) { 
-        res.status(500).json({ error: err.message }); 
+
+        const category = await Category.findById(category_id);
+        if (category && (category.category_name.toLowerCase().includes('sav') || category.category_name.toLowerCase().includes('emer'))) {
+            await Savings.findOneAndUpdate(
+                { expense_ref_id: updatedExpense._id },
+                { 
+                    user_id: req.user.id, 
+                    amount: updatedExpense.amount, 
+                    description: updatedExpense.item_name, 
+                    expense_ref_id: updatedExpense._id 
+                },
+                { upsert: true, new: true }
+            );
+        } else {
+            await Savings.findOneAndDelete({ expense_ref_id: updatedExpense._id });
+        }
+        res.json(updatedExpense);
+    } catch (err) {
+        res.status(400).json({ message: "Update failed" });
     }
 });
 
-// 5. PERMANENT DELETE
-router.delete('/delete/:id', protect, async (req, res) => {
+// --- 5. ARCHIVE AN ITEM ---
+router.put('/archive/:id', auth, async (req, res) => {
     try {
-        await Expense.findOneAndDelete({ _id: req.params.id, user_id: req.user.id });
-        res.json({ message: "Record permanently deleted" });
-    } catch (err) { 
-        res.status(500).json({ error: err.message }); 
+        await Expenses.findOneAndUpdate({ _id: req.params.id, user_id: req.user.id }, { is_archived: true });
+        res.json({ message: "Archived" });
+    } catch (err) {
+        res.status(500).json({ message: "Failed to archive" });
+    }
+});
+
+// --- 6. RESTORE AN ITEM ---
+router.put('/restore/:id', auth, async (req, res) => {
+    try {
+        await Expenses.findOneAndUpdate({ _id: req.params.id, user_id: req.user.id }, { is_archived: false });
+        res.json({ message: "Restored" });
+    } catch (err) {
+        res.status(500).json({ message: "Failed to restore" });
+    }
+});
+
+// --- 7. PERMANENT DELETE ---
+router.delete('/delete/:id', auth, async (req, res) => {
+    try {
+        await Expenses.findOneAndDelete({ _id: req.params.id, user_id: req.user.id });
+        await Savings.findOneAndDelete({ expense_ref_id: req.params.id });
+        res.json({ message: "Deleted" });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
 });
 

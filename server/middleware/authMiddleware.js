@@ -9,17 +9,16 @@ const protect = (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
         
-        // Sa MongoDB, ang decoded.id ay maglalaman ng user._id 
-        // na ni-sign natin sa auth.js kanina.
+        //req.user ay maglalaman ng { id: user._id, username: user.username }
         req.user = decoded; 
         next(); 
     } catch (err) {
-        // Mas maganda kung i-log natin ang error para sa debugging
         console.error("JWT Verification Error:", err.message);
         res.status(401).json({ message: "Invalid or Expired Token" });
     }
 };
 
-module.exports = { protect };
+// FIX: I-export ang function mismo, hindi object
+module.exports = protect;

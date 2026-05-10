@@ -10,6 +10,8 @@ import Expenses from './pages/Expenses';
 import Savings from './pages/Savings';
 import Archive from './pages/Archive';
 import Reports from './pages/Reports'; 
+import Events from './pages/Events'; 
+import EventDetails from './pages/EventDetails'; 
 
 // Components
 import Sidebar from './components/Sidebar';
@@ -17,7 +19,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
-    /* Idinagdag ang Future Flags para mawala ang warnings sa console */
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div className="bg-[#001B3D] min-h-screen font-sans text-slate-200 selection:bg-cyan-400/30">
         <Routes>
@@ -41,10 +42,12 @@ function App() {
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/expenses" element={<Expenses />} />
                       <Route path="/savings" element={<Savings />} />
+                      <Route path="/events" element={<Events />} />
+                      <Route path="/events/:id" element={<EventDetails />} />
                       <Route path="/reports" element={<Reports />} /> 
                       <Route path="/archive" element={<Archive />} />
                       
-                      {/* Default redirects para sa RAD workflow */}
+                      {/* Default redirects */}
                       <Route path="/" element={<Navigate to="/dashboard" replace />} />
                       <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>

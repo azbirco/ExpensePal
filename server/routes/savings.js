@@ -1,34 +1,95 @@
 const express = require('express');
 const router = express.Router();
-// SIGURADUHIN: Ang filename sa folder ay Savings.js (may 's')
-const Saving = require('../models/Savings'); 
-const { protect } = require('../middleware/authMiddleware');
+const Savings = require('../models/Savings'); 
+const auth = require('../middleware/authMiddleware'); // FIX: Added auth
 
-// 1. Get Total Savings & History
-router.get('/', protect, async (req, res) => {
+// @route   GET /api/savings
+router.get('/', auth, async (req, res) => {
     try {
-        const savings = await Saving.find({ user_id: req.user.id })
-                                    .sort({ date_added: -1 });
+        const savings = await Savings.find({ 
+            user_id: req.user.id, // FIX: Ensure user-specific data
+            isArchived: { $ne: true } 
+        }).sort({ date_added: -1 });
         res.json(savings);
     } catch (err) {
-        res.status(500).json({ message: "Error fetching savings", error: err.message });
+        res.status(500).json({ message: "Server Error", error: err.message });
     }
 });
 
-// 2. Add Savings Entry
-router.post('/add', protect, async (req, res) => {
-    const { amount, description } = req.body;
+// @route   POST /api/savings
+router.post('/', auth, async (req, res) => {
     try {
-        const newSaving = new Saving({
-            user_id: req.user.id,
-            amount: amount,
-            description: description
+        const { amount, description, target_amount, expense_ref_id } = req.body;
+        const newSaving = new Savings({
+            user_id: req.user.id, // FIX: Use ID from token
+            amount: parseFloat(amount),
+            description,
+            target_amount: target_amount || 0,
+            expense_ref_id,
+            isArchived: false,
+            date_added: new Date()
         });
-
-        await newSaving.save();
-        res.status(201).json({ message: "Savings updated!" });
+        const saving = await newSaving.save();
+        res.json(saving);
     } catch (err) {
-        res.status(500).json({ message: "Error adding savings", error: err.message });
+        res.status(500).json({ message: "Error saving deposit", error: err.message });
+    }
+});
+
+// @route   PUT /api/savings/archive/:id
+router.put('/archive/:id', auth, async (req, res) => {
+    try {
+        const updated = await Savings.findOneAndUpdate(
+            { _id: req.params.id, user_id: req.user.id }, 
+            { isArchived: true }, 
+            { new: true }
+        );
+        if (!updated) return res.status(404).json({ message: "Record not found" });
+        res.json({ message: "Record moved to Archive", data: updated });
+    } catch (err) {
+        res.status(500).json({ message: "Error archiving record", error: err.message });
+    }
+});
+
+// @route   GET /api/savings/archived-list
+router.get('/archived-list', auth, async (req, res) => {
+    try {
+        const archivedSavings = await Savings.find({ 
+            user_id: req.user.id, 
+            isArchived: true 
+        }).sort({ date_added: -1 });
+        res.json(archivedSavings);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching archived items", error: err.message });
+    }
+});
+
+// @route   PUT /api/savings/restore/:id
+router.put('/restore/:id', auth, async (req, res) => {
+    try {
+        const updated = await Savings.findOneAndUpdate(
+            { _id: req.params.id, user_id: req.user.id }, 
+            { isArchived: false }, 
+            { new: true }
+        );
+        if (!updated) return res.status(404).json({ message: "Record not found" });
+        res.json({ message: "Record restored successfully", data: updated });
+    } catch (err) {
+        res.status(500).json({ message: "Error restoring record", error: err.message });
+    }
+});
+
+// @route   DELETE /api/savings/delete/:id
+router.delete('/delete/:id', auth, async (req, res) => {
+    try {
+        const deleted = await Savings.findOneAndDelete({ 
+            _id: req.params.id, 
+            user_id: req.user.id 
+        });
+        if (!deleted) return res.status(404).json({ message: "Record not found" });
+        res.json({ message: "Record permanently deleted" });
+    } catch (err) {
+        res.status(500).json({ message: "Error deleting record", error: err.message });
     }
 });
 
