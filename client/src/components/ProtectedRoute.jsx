@@ -1,15 +1,19 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, adminOnly = false }) => {
   const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user'));
 
-  // Kung walang token, ibalik sa login screen
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  // Kung authorized (may token), ipakita ang hiniling na page
+  // Kung kailangan ng admin access pero 'user' lang ang role
+  if (adminOnly && user?.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return children;
 };
 

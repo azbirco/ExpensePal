@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const Savings = require('../models/Savings'); 
-const auth = require('../middleware/authMiddleware'); // FIX: Added auth
+// FIX: Tamang pag-import gamit ang destructuring
+const { protect } = require('../middleware/authMiddleware');
 
 // @route   GET /api/savings
-router.get('/', auth, async (req, res) => {
+router.get('/', protect, async (req, res) => {
     try {
         const savings = await Savings.find({ 
-            user_id: req.user.id, // FIX: Ensure user-specific data
+            user_id: req.user.id, 
             isArchived: { $ne: true } 
         }).sort({ date_added: -1 });
         res.json(savings);
@@ -17,11 +18,11 @@ router.get('/', auth, async (req, res) => {
 });
 
 // @route   POST /api/savings
-router.post('/', auth, async (req, res) => {
+router.post('/', protect, async (req, res) => {
     try {
         const { amount, description, target_amount, expense_ref_id } = req.body;
         const newSaving = new Savings({
-            user_id: req.user.id, // FIX: Use ID from token
+            user_id: req.user.id, 
             amount: parseFloat(amount),
             description,
             target_amount: target_amount || 0,
@@ -37,7 +38,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // @route   PUT /api/savings/archive/:id
-router.put('/archive/:id', auth, async (req, res) => {
+router.put('/archive/:id', protect, async (req, res) => {
     try {
         const updated = await Savings.findOneAndUpdate(
             { _id: req.params.id, user_id: req.user.id }, 
@@ -52,7 +53,7 @@ router.put('/archive/:id', auth, async (req, res) => {
 });
 
 // @route   GET /api/savings/archived-list
-router.get('/archived-list', auth, async (req, res) => {
+router.get('/archived-list', protect, async (req, res) => {
     try {
         const archivedSavings = await Savings.find({ 
             user_id: req.user.id, 
@@ -65,7 +66,7 @@ router.get('/archived-list', auth, async (req, res) => {
 });
 
 // @route   PUT /api/savings/restore/:id
-router.put('/restore/:id', auth, async (req, res) => {
+router.put('/restore/:id', protect, async (req, res) => {
     try {
         const updated = await Savings.findOneAndUpdate(
             { _id: req.params.id, user_id: req.user.id }, 
@@ -80,7 +81,7 @@ router.put('/restore/:id', auth, async (req, res) => {
 });
 
 // @route   DELETE /api/savings/delete/:id
-router.delete('/delete/:id', auth, async (req, res) => {
+router.delete('/delete/:id', protect, async (req, res) => {
     try {
         const deleted = await Savings.findOneAndDelete({ 
             _id: req.params.id, 
